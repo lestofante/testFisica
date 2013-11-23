@@ -43,13 +43,6 @@ public class ServerWorld {
 		a.setBody(tmp);
 		tmp.m_userData = a;
 		stepListener.add(a);
-		
-		for (Actor s: a.getSensors()){
-			tmp = world.createBody( s.getBodyDef() );
-			s.setBody(tmp);
-			tmp.m_userData = s;
-			//stepListener.add(a);
-		}
 	}
 	
 	/**

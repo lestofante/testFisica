@@ -2,31 +2,25 @@ package testFisicaMaven.testFisicaMaven.actors;
 
 import java.util.ArrayList;
 
-import org.jbox2d.collision.shapes.CircleShape;
-import org.jbox2d.collision.shapes.Shape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
-import org.jbox2d.dynamics.FixtureDef;
 
 import testFisicaMaven.testFisicaMaven.Actions.ActionRotate;
 import testFisicaMaven.testFisicaMaven.Actions.ActionTraslate;
 import testFisicaMaven.testFisicaMaven.Actions.Actions;
+import testFisicaMaven.testFisicaMaven.actors.BluePrint.Tipo;
 import testFisicaMaven.testFisicaMaven.physic.PhysicListener;
 
 public class Actor implements PhysicListener, ActorListener{
-	public static enum Tipo {
-		Astronave, Radar 
-	}
-	
+
 	private static int FREE_ID = 0;
 	public static int getNextFreeId(){
 		return FREE_ID++;
 	}
 	
 	private Body body;
-	private ArrayList<Actor> sensors = new ArrayList<Actor>();
 	private final Tipo tipo;
 	private final int id;
 	
@@ -34,14 +28,8 @@ public class Actor implements PhysicListener, ActorListener{
 	private ArrayList<ActorListener> listeners = new ArrayList<ActorListener>();
 	
 	public Actor(Tipo t){
-		this.tipo = t;
 		this.id = getNextFreeId();
-		
-		if (t == Tipo.Astronave){
-			Actor sensor = new Actor(Tipo.Radar);
-			sensor.addListener(this);
-			sensors.add(id, sensor );
-		}
+		this.tipo = t;
 	}
 	
 	public int getId() {
@@ -55,36 +43,7 @@ public class Actor implements PhysicListener, ActorListener{
 	}
 
 	public void setBody(Body body) {
-		
-		//define fixture of the body.
-		FixtureDef fd = new FixtureDef();
-		Shape cs;
-		
-		switch(tipo){
-		case Astronave:
-			//define shape of the body.
-			cs = new CircleShape();
-			
-			//body definition
-			cs.m_radius = 0.5f;
-			fd.shape = cs;
-			fd.density = 0.5f;
-			fd.friction = 0.3f;       
-			fd.restitution = 0.5f;
-			break;
-		case Radar:
-			//define shape of the body.
-			cs = new CircleShape();
-			//body definition
-			cs.m_radius = 10f;
-			fd.shape = cs;
-			fd.isSensor = true;
-		default:
-			break;
-		}
-		
-		body.createFixture(fd);
-		
+		BluePrint.createFixiture(tipo, body);
 		this.body = body;
 	}
 	
@@ -100,10 +59,6 @@ public class Actor implements PhysicListener, ActorListener{
 	public void applyTorque(float torque){
 		body.applyTorque(torque);
 		azioni.add(new ActionRotate(id, torque));
-	}
-	
-	public ArrayList<Actor> getSensors() {
-		return sensors;
 	}
 
 	/**
