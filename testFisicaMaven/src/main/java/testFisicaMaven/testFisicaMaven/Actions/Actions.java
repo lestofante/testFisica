@@ -1,5 +1,5 @@
 package testFisicaMaven.testFisicaMaven.Actions;
 
-public class Actions {
+public abstract class Actions {
 
 }

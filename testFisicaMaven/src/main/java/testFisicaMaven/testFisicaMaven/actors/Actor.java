@@ -13,9 +13,9 @@ import org.jbox2d.dynamics.FixtureDef;
 import testFisicaMaven.testFisicaMaven.Actions.ActionRotate;
 import testFisicaMaven.testFisicaMaven.Actions.ActionTraslate;
 import testFisicaMaven.testFisicaMaven.Actions.Actions;
-import testFisicaMaven.testFisicaMaven.user.Player;
+import testFisicaMaven.testFisicaMaven.physic.PhysicListener;
 
-public class Actor {
+public class Actor implements PhysicListener, ActorListener{
 	public static enum Tipo {
 		Astronave, Radar 
 	}
@@ -31,14 +31,16 @@ public class Actor {
 	private final int id;
 	
 	private ArrayList<Actions> azioni = new ArrayList<Actions>();
-	private Player owner;
+	private ArrayList<ActorListener> listeners = new ArrayList<ActorListener>();
 	
-	public Actor(Tipo t, Player owner){
+	public Actor(Tipo t){
 		this.tipo = t;
 		this.id = getNextFreeId();
-		this.owner = owner;
+		
 		if (t == Tipo.Astronave){
-			sensors.add(id, new Actor(Tipo.Radar, owner) );
+			Actor sensor = new Actor(Tipo.Radar);
+			sensor.addListener(this);
+			sensors.add(id, sensor );
 		}
 	}
 	
@@ -104,12 +106,46 @@ public class Actor {
 		return sensors;
 	}
 
+	/**
+	 * This method return all action executed on this Actor in this turn.
+	 * It get cleared when onEndTurn() get called
+	 * @return
+	 */
 	public ArrayList<Actions> getActions() {
 		return azioni;
 	}
+	
+	/**
+	 * Add a listener to this Actor, who get informed on whatever happens on this Actor and its sensor
+	 */
+	public void addListener(ActorListener l){
+		listeners .add(l);
+	}
 
-	public Player getPlayer() {
-		return owner;
+	/* FROM PHYSIC LISTENER */
+	public void onCreate(Actor a, long turn) {
+		for(ActorListener l: listeners){
+			l.onCreate(a, turn);
+		}
+	}
+
+	public void onDestroy(Actor a, long turn) {
+		for(ActorListener l: listeners){
+			l.onDestroy(a, turn);
+		}
+	}
+
+	public void onScan(Actor a, long turn) {
+		for(ActorListener l: listeners){
+			l.onScan(a, turn);
+		}
+	}
+
+	public void onEndTurn(long turn) {
+		azioni.clear();
+		for(ActorListener l: listeners){
+			l.onEndTurn(turn);
+		}
 	}
 
 }
