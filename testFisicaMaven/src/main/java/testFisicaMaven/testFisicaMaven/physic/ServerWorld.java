@@ -17,7 +17,6 @@ public class ServerWorld {
     int POSI = 2;
 	long turn = 0;
 	CollisionListener collisions = new CollisionListener();
-	private boolean DEBUG = true;
 	private TreeSet<PhysicListener> stepListener= new TreeSet<PhysicListener>(); 
 	
 	/**
@@ -39,10 +38,17 @@ public class ServerWorld {
 	 * @param The actor that should be added
 	 */
 	public void addActor(Actor a) {
+		addActor(a, new Vec2(), 0);
+	}
+	
+	public void addActor(Actor a, Vec2 position, float angle) {
 		Body tmp = world.createBody( a.getBodyDef() );
+		tmp.setTransform(position, angle);
 		a.setBody(tmp);
 		tmp.m_userData = a;
 		stepListener.add(a);
+		
+		a.onScanStart(a, turn); // yes, you have been created! Scan yourself :D
 	}
 	
 	/**
@@ -55,18 +61,9 @@ public class ServerWorld {
 		world.step(STEP, VI, POSI);
 		sendCollisionEventToPlayer();
 
-		if ( DEBUG  && turn%100 == 0 ){
-			sendAllMap();
-		}
-		
 		for (PhysicListener l: stepListener){
 			l.onEndTurn(turn);
 		}
-	}
-
-	private void sendAllMap() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	private void sendCollisionEventToPlayer() {
@@ -74,51 +71,86 @@ public class ServerWorld {
 		for( Contact c : collisions.endContact ){
 			//send destroy action
 			if (c.m_fixtureA.m_isSensor && !c.m_fixtureB.m_isSensor){
-				sendDestory(c.m_fixtureA, c.m_fixtureB); //send destroy of b to a
+				sendScanEnd(c.m_fixtureA, c.m_fixtureB); //send destroy of b to a
 			}else if (!c.m_fixtureA.m_isSensor && c.m_fixtureB.m_isSensor){
-				sendDestory(c.m_fixtureB, c.m_fixtureA); //send destroy of a to b
+				sendScanEnd(c.m_fixtureB, c.m_fixtureA); //send destroy of a to b
+			}if (!c.m_fixtureA.m_isSensor && !c.m_fixtureB.m_isSensor){
+				sendCollisionEnd(c.m_fixtureA, c.m_fixtureB); //send update of b to a
+				sendCollisionEnd(c.m_fixtureB, c.m_fixtureA); //send update of a to b
 			}
 			//actually we don't care of any other case
 		}
 		for( Contact c : collisions.newContact ){
 			//send create action
 			if (c.m_fixtureA.m_isSensor && !c.m_fixtureB.m_isSensor){
-				sendCreate(c.m_fixtureA, c.m_fixtureB); //send destroy of b to a
+				sendScanStart(c.m_fixtureA, c.m_fixtureB); //send create of b to a
 			}else if (!c.m_fixtureA.m_isSensor && c.m_fixtureB.m_isSensor){
-				sendCreate(c.m_fixtureB, c.m_fixtureA); //send destroy of a to b
+				sendScanStart(c.m_fixtureB, c.m_fixtureA); //send create of a to b
+			}if (!c.m_fixtureA.m_isSensor && !c.m_fixtureB.m_isSensor){
+				sendCollisionStart(c.m_fixtureA, c.m_fixtureB); //send update of b to a
+				sendCollisionStart(c.m_fixtureB, c.m_fixtureA); //send update of a to b
 			}
 			//actually we don't care of any other case
 		}
 		for( Contact c : collisions.continousContact.values() ){
-			//send body action to sensor
+			//send body update sensor
 			if (c.m_fixtureA.m_isSensor && !c.m_fixtureB.m_isSensor){
-				sendAction(c.m_fixtureA, c.m_fixtureB); //send destroy of b to a
+				sendScan(c.m_fixtureA, c.m_fixtureB); //send update of b to a
 			}else if (!c.m_fixtureA.m_isSensor && c.m_fixtureB.m_isSensor){
-				sendAction(c.m_fixtureB, c.m_fixtureA); //send destroy of a to b
+				sendScan(c.m_fixtureB, c.m_fixtureA); //send update of a to b
+			}if (!c.m_fixtureA.m_isSensor && !c.m_fixtureB.m_isSensor){
+				sendCollision(c.m_fixtureA, c.m_fixtureB); //send update of b to a
+				sendCollision(c.m_fixtureB, c.m_fixtureA); //send update of a to b
 			}
+			
 			//actually we don't care of any other case
 		}
 	}
 	
-	private void sendAction(Fixture reciver_fix, Fixture scanned_fix) {
-		Actor reciver = (Actor)reciver_fix.m_userData;
-		reciver.onScan( ((Actor)scanned_fix.m_userData), turn );//we need to send many Actor info for creation
+	private void sendScan(Fixture reciver_fix, Fixture scanned_fix) {
+		Actor reciver = (Actor)reciver_fix.m_body.m_userData;
+		Actor originator = (Actor)scanned_fix.m_body.m_userData;
+		reciver.onScan( originator, turn );//we need to send many Actor info for creation
 	}
 
-	private void sendCreate(Fixture reciver_fix, Fixture created_fix) {
-		Actor reciver = (Actor)reciver_fix.m_userData;
-		reciver.onCreate( ((Actor)created_fix.m_userData), turn );//we need to send many Actor info for creation
+	private void sendScanStart(Fixture reciver_fix, Fixture created_fix) {
+		Actor reciver = (Actor)reciver_fix.m_body.m_userData;
+		Actor originator = (Actor)created_fix.m_body.m_userData;
+		reciver.onScanStart( originator, turn );//we need to send many Actor info for creation
 	}
 
-	private void sendDestory(Fixture reciver_fix, Fixture destoied_fix) {
-		Actor reciver = (Actor)reciver_fix.m_userData;
-		reciver.onDestroy( ((Actor)destoied_fix.m_userData), turn ); //we just need the id of destoied object for destruction  
+	private void sendScanEnd(Fixture reciver_fix, Fixture destoied_fix) {
+		Actor reciver = (Actor)reciver_fix.m_body.m_userData;
+		Actor originator = (Actor)destoied_fix.m_body.m_userData;
+		reciver.onScanEnd( originator, turn ); //we just need the id of destoied object for destruction  
+	}
+	
+	private void sendCollision(Fixture reciver_fix, Fixture scanned_fix) {
+		Actor reciver = (Actor)reciver_fix.m_body.m_userData;
+		Actor originator = (Actor)scanned_fix.m_body.m_userData;
+		reciver.onCollision( originator, turn );//we need to send many Actor info for creation
+	}
+
+	private void sendCollisionStart(Fixture reciver_fix, Fixture created_fix) {
+		Actor reciver = (Actor)reciver_fix.m_body.m_userData;
+		Actor originator = (Actor)created_fix.m_body.m_userData;
+		reciver.onCollisionStart( originator, turn );//we need to send many Actor info for creation
+	}
+
+	private void sendCollisionEnd(Fixture reciver_fix, Fixture destoied_fix) {
+		Actor reciver = (Actor)reciver_fix.m_body.m_userData;
+		Actor originator = (Actor)destoied_fix.m_body.m_userData;
+		reciver.onCollisionEnd( originator, turn ); //we just need the id of destoied object for destruction  
 	}
 
 	private void clearCollision() {
 		collisions.newContact.clear();
 		collisions.endContact.clear();
 		//persistent collision get auto-cleared by collision listener.
+	}
+
+	public long getTurn() {
+		return turn;
 	}
 	
 }

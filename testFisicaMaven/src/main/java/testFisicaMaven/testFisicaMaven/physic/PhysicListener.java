@@ -5,25 +5,40 @@ import testFisicaMaven.testFisicaMaven.actors.Actor;
 public interface PhysicListener {
 
 	/**
-	 * this method will called when an actor get in range of at least one sensors of this player
-	 * @param the Actor that has been added
+	 * @param the Actor that has been scanned
 	 * @param turn number
 	 */
-	public void onCreate(Actor a, long turn);
+	public void onScanStart(Actor a, long turn);
 
 	/**
-	 * this method will called when an actor get removed of at least one sensors of this player
-	 * @param the id of the actor to be removed
+	 * @param the Actor that has been gone out of scan
 	 * @param turn number
 	 */
-	public void onDestroy(Actor a, long turn);
+	public void onScanEnd(Actor a, long turn);
 
-	/**
-	 * this method will called giving the list of the actions of the scanned player 
-	 * @param the id of the actor to be removed
+	/** 
+	 * @param the Actor that has still be scanned
 	 * @param turn number	 
 	 */
 	public void onScan(Actor a, long turn);
+	
+	/**
+	 * @param the Actor that has been collided
+	 * @param turn number
+	 */
+	public void onCollisionStart(Actor a, long turn);
+
+	/**
+	 * @param the Actor that has been gone out of collision
+	 * @param turn number
+	 */
+	public void onCollisionEnd(Actor a, long turn);
+
+	/** 
+	 * @param the Actor that has still collide
+	 * @param turn number	 
+	 */
+	public void onCollision(Actor a, long turn);
 
 	/**
 	 * this method will called after every physic step 

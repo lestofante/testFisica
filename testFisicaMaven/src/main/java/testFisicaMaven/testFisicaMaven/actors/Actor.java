@@ -13,7 +13,7 @@ import testFisicaMaven.testFisicaMaven.Actions.Actions;
 import testFisicaMaven.testFisicaMaven.actors.BluePrint.Tipo;
 import testFisicaMaven.testFisicaMaven.physic.PhysicListener;
 
-public class Actor implements PhysicListener, ActorListener{
+public class Actor implements PhysicListener, Comparable<Actor>{
 
 	private static int FREE_ID = 0;
 	public static int getNextFreeId(){
@@ -78,28 +78,55 @@ public class Actor implements PhysicListener, ActorListener{
 	}
 
 	/* FROM PHYSIC LISTENER */
-	public void onCreate(Actor a, long turn) {
+	public void onScanStart(Actor a, long turn) {
 		for(ActorListener l: listeners){
-			l.onCreate(a, turn);
+			l.onScanStart(a, turn, this);
 		}
 	}
 
-	public void onDestroy(Actor a, long turn) {
+	public void onScanEnd(Actor a, long turn) {
 		for(ActorListener l: listeners){
-			l.onDestroy(a, turn);
+			l.onScanEnd(a, turn, this);
 		}
 	}
 
 	public void onScan(Actor a, long turn) {
 		for(ActorListener l: listeners){
-			l.onScan(a, turn);
+			l.onScan(a, turn, this);
 		}
 	}
 
 	public void onEndTurn(long turn) {
 		azioni.clear();
 		for(ActorListener l: listeners){
-			l.onEndTurn(turn);
+			l.onEndTurn(turn, this);
+		}
+	}
+
+	public int compareTo(Actor arg0) {
+		return Integer.compare(id, arg0.id);
+	}
+	
+	@Override
+	public String toString(){
+		return "id: "+id+"tipo: "+tipo+" posizione: "+body.getPosition()+" angolo: "+body.getAngle();
+	}
+
+	public void onCollisionStart(Actor a, long turn) {
+		for(ActorListener l: listeners){
+			l.onCollisionStart(a, turn, this);
+		}
+	}
+
+	public void onCollisionEnd(Actor a, long turn) {
+		for(ActorListener l: listeners){
+			l.onCollisionEnd(a, turn, this);
+		}
+	}
+
+	public void onCollision(Actor a, long turn) {
+		for(ActorListener l: listeners){
+			l.onCollision(a, turn, this);
 		}
 	}
 

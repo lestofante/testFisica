@@ -20,7 +20,7 @@ public class CollisionListener implements ContactListener{
 		
 		Actor a = (Actor)arg0.m_fixtureA.m_body.m_userData;
 		Actor b = (Actor)arg0.m_fixtureB.m_body.m_userData;
-		continousContact.put(a.getId()+"-"+b.getId(), arg0);
+		continousContact.put(a.getId()+"-"+b.getId(), arg0 );
 	}
 
 	public void endContact(Contact arg0) {
