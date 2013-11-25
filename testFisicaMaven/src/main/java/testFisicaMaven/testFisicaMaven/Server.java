@@ -40,7 +40,7 @@ public class Server {
 			System.out.println( "lastCreated: "+ lastCreated.toString() );
 			
 			if (world.getTurn() > 50){
-				lastCreated.applyForce( new Vec2(1000*direction, 0.01f) );			
+				lastCreated.applyForce( new Vec2(1000*direction, 0) );			
 			}
 			
 			// and the wait based on tour desired physic frame rate
@@ -55,36 +55,34 @@ public class Server {
 
 	private void addBody() {
 		ActorListener oneForAll = new ActorListener() {
-			public void onScan(Actor a, long turn, Actor b) {
-				System.out.println(b.getId() + " Scanned:" + a.toString() );
-			}
-
 			public void onEndTurn(long turn, Actor b) {
 				System.out.println(b.getId() + " End turn:" + turn);
 			}
+			
+			public void onScan(Actor a, long turn, Actor b) {
+				//System.out.println(b.getId() + " Scanned:" + a.toString() );
+			}
 
 			public void onScanEnd(Actor a, long turn, Actor b) {
-				System.out.println(b.getId() + " Destroyed:" + a.getId());
+				System.out.println(b.getId() + " Scan End:" + a.getId());
 			}
 
 			public void onScanStart(Actor a, long turn, Actor b) {
-				System.out.println(b.getId() + " Created:" + a.getId());
+				System.out.println(b.getId() + " Scan Start:" + a.getId());
 			}
 
 			public void onCollisionStart(Actor a, long turn, Actor b) {
-				// TODO Auto-generated method stub
-				
+				System.out.println(b.getId() + " Collision Start:" + a.getId());
 			}
 
 			public void onCollisionEnd(Actor a, long turn, Actor b) {
-				// TODO Auto-generated method stub
-				
+				System.out.println(b.getId() + " Collision End:" + a.getId());
 			}
 
 			public void onCollision(Actor a, long turn, Actor b) {
 				//warning: collision overwrite scan,if you get a scan you won't have a collision
 				System.out.println(b.getId() + " collided:" + a.getId());
-				direction *= -1;
+				//direction *= -1;
 			}
 		};
 		Actor attore = null;

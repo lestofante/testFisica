@@ -9,6 +9,7 @@ public class BluePrint {
 	public static enum Tipo {
 		Astronave 
 	}
+	public static long fixtureId = 0;
 	
 	public static void createFixiture(Tipo tipo, Body body) {
 		FixtureDef fd = new FixtureDef();
@@ -23,8 +24,12 @@ public class BluePrint {
 			cs.m_radius = 0.5f;
 			fd.shape = cs;
 			fd.density = 0.5f;
-			fd.friction = 0.3f;       
+			fd.friction = 0.3f;
 			fd.restitution = 0.5f;
+			
+			//if you forgot to add an id, ContacListener will crash and you will debug in pain 
+			fd.userData = fixtureId++;
+			
 			//add the HULL to the body
 			body.createFixture(fd);
 			
@@ -34,6 +39,10 @@ public class BluePrint {
 			cs.m_radius = 10f;
 			fd.shape = cs;
 			fd.isSensor = true;
+			
+			//if you forgot to add an id, ContacListener will crash and you will debug in pain
+			fd.userData = fixtureId++;
+			
 			//add the RADAR to the body
 			body.createFixture(fd);
 			break;
