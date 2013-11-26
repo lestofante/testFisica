@@ -2,16 +2,14 @@ package testFisicaMaven.testFisicaMaven.actors;
 
 import java.util.ArrayList;
 
-import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
 
-import testFisicaMaven.testFisicaMaven.Actions.ActionRotate;
-import testFisicaMaven.testFisicaMaven.Actions.ActionTraslate;
-import testFisicaMaven.testFisicaMaven.Actions.Actions;
+import testFisicaMaven.testFisicaMaven.Actions.Action;
 import testFisicaMaven.testFisicaMaven.actors.BluePrint.Tipo;
 import testFisicaMaven.testFisicaMaven.physic.PhysicListener;
+import testFisicaMaven.testFisicaMaven.physic.ServerWorld;
 
 public class Actor implements PhysicListener, Comparable<Actor>{
 
@@ -20,12 +18,16 @@ public class Actor implements PhysicListener, Comparable<Actor>{
 		return FREE_ID++;
 	}
 	
-	private Body body;
-	private final Tipo tipo;
 	private final int id;
+	private final Tipo tipo;
 	
-	private ArrayList<Actions> azioni = new ArrayList<Actions>();
+	private ServerWorld physic;
+	private Body body;
+	
+	private ArrayList<Action> actionsArrivedThisTurn = new ArrayList<Action>();
+	
 	private ArrayList<ActorListener> listeners = new ArrayList<ActorListener>();
+	
 	
 	public Actor(Tipo t){
 		this.id = getNextFreeId();
@@ -42,11 +44,27 @@ public class Actor implements PhysicListener, Comparable<Actor>{
 		return bd;
 	}
 
+	public void setPhysic(ServerWorld physic) {
+		this.physic = physic;
+	}
+	
 	public void setBody(Body body) {
 		BluePrint.createFixiture(tipo, body);
 		this.body = body;
 	}
 	
+	public Body getBody() {
+		return body;
+	}
+	
+	public void applyAction(Action a){
+		actionsArrivedThisTurn.add(a);
+		a.setActor(this);
+		physic.addAction(a);
+	}
+	
+	
+/*	
 	public void applyForce(Vec2 force){
 		applyForce(force, body.getWorldCenter());
 	}
@@ -60,14 +78,14 @@ public class Actor implements PhysicListener, Comparable<Actor>{
 		body.applyTorque(torque);
 		azioni.add(new ActionRotate(id, torque));
 	}
-
+*/
 	/**
 	 * This method return all action executed on this Actor in this turn.
 	 * It get cleared when onEndTurn() get called
 	 * @return
 	 */
-	public ArrayList<Actions> getActions() {
-		return azioni;
+	public ArrayList<Action> getActions() {
+		return actionsArrivedThisTurn;
 	}
 	
 	/**
@@ -76,8 +94,25 @@ public class Actor implements PhysicListener, Comparable<Actor>{
 	public void addListener(ActorListener l){
 		listeners .add(l);
 	}
+	
+	public int compareTo(Actor arg0) {
+		return Integer.compare(id, arg0.id);
+	}
+	
+	@Override
+	public String toString(){
+		return "id: "+id+"tipo: "+tipo+" posizione: "+body.getPosition()+" angolo: "+body.getAngle();
+	}
 
 	/* FROM PHYSIC LISTENER */
+
+	public void onEndTurn(long turn) {
+		actionsArrivedThisTurn.clear();
+		for(ActorListener l: listeners){
+			l.onEndTurn(turn, this);
+		}
+	}
+	
 	public void onScanStart(Actor a, long turn) {
 		for(ActorListener l: listeners){
 			l.onScanStart(a, turn, this);
@@ -94,22 +129,6 @@ public class Actor implements PhysicListener, Comparable<Actor>{
 		for(ActorListener l: listeners){
 			l.onScan(a, turn, this);
 		}
-	}
-
-	public void onEndTurn(long turn) {
-		azioni.clear();
-		for(ActorListener l: listeners){
-			l.onEndTurn(turn, this);
-		}
-	}
-
-	public int compareTo(Actor arg0) {
-		return Integer.compare(id, arg0.id);
-	}
-	
-	@Override
-	public String toString(){
-		return "id: "+id+"tipo: "+tipo+" posizione: "+body.getPosition()+" angolo: "+body.getAngle();
 	}
 
 	public void onCollisionStart(Actor a, long turn) {

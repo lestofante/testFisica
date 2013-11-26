@@ -2,6 +2,7 @@ package testFisicaMaven.testFisicaMaven;
 
 import org.jbox2d.common.Vec2;
 
+import testFisicaMaven.testFisicaMaven.Actions.ActionImpulse;
 import testFisicaMaven.testFisicaMaven.actors.Actor;
 import testFisicaMaven.testFisicaMaven.actors.ActorListener;
 import testFisicaMaven.testFisicaMaven.actors.BluePrint.Tipo;
@@ -39,8 +40,8 @@ public class Server {
 
 			System.out.println( "lastCreated: "+ lastCreated.toString() );
 			
-			if (world.getTurn() > 50){
-				lastCreated.applyForce( new Vec2(1000*direction, 0) );			
+			if (world.getTurn() % 50==0){
+				lastCreated.applyAction( new ActionImpulse(new Vec2(-50, 0)) );			
 			}
 			
 			// and the wait based on tour desired physic frame rate

@@ -1,5 +1,8 @@
 package testFisicaMaven.testFisicaMaven.physic;
 
+import java.util.ArrayList;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.jbox2d.common.Vec2;
@@ -8,16 +11,20 @@ import org.jbox2d.dynamics.Fixture;
 import org.jbox2d.dynamics.World;
 import org.jbox2d.dynamics.contacts.Contact;
 
+import testFisicaMaven.testFisicaMaven.Actions.Action;
 import testFisicaMaven.testFisicaMaven.actors.Actor;
 
 public class ServerWorld {
+	private static final long ACTION_BUFFER = 10;
 	World world;
 	float STEP = 1.0f/60.0f;
     int VI = 6;
     int POSI = 2;
 	long turn = 0;
-	CollisionListener collisions = new CollisionListener();
+	private CollisionListener collisions = new CollisionListener();
 	private TreeSet<PhysicListener> stepListener= new TreeSet<PhysicListener>(); 
+	
+	private SortedMap<Long, ArrayList<Action>> actionsByTurn = new TreeMap<Long, ArrayList<Action>>();
 	
 	/**
 	 * default constructor. no gravity, standard physic settings. 
@@ -45,6 +52,7 @@ public class ServerWorld {
 		Body tmp = world.createBody( a.getBodyDef() );
 		tmp.setTransform(position, angle);
 		a.setBody(tmp);
+		a.setPhysic(this);
 		tmp.m_userData = a;
 		stepListener.add(a);
 		
@@ -58,6 +66,17 @@ public class ServerWorld {
 		turn++;
 		
 		clearCollision();
+		
+		SortedMap<Long, ArrayList<Action>> toBeExecuted = new TreeMap<Long, ArrayList<Action>>( actionsByTurn.headMap(turn+1) );
+		actionsByTurn = actionsByTurn.tailMap(turn+1);
+		
+		for (ArrayList<Action> z:toBeExecuted.values()){
+			for (Action a:z){
+				a.setApplyTurn(turn);
+				a.execute(world, turn);
+			}
+		}
+		
 		world.step(STEP, VI, POSI);
 		sendCollisionEventToPlayer();
 
@@ -151,6 +170,19 @@ public class ServerWorld {
 
 	public long getTurn() {
 		return turn;
+	}
+
+	public void addAction(Action a) {
+		long applyTurn = a.getApplyTurn();
+		if (applyTurn == -1){
+			applyTurn = this.turn+ACTION_BUFFER;
+		}
+		ArrayList<Action> arrayList = actionsByTurn.get(applyTurn);
+		if (arrayList==null){
+			arrayList = new ArrayList<Action>();
+			actionsByTurn.put(applyTurn, arrayList);
+		}
+		arrayList.add(a);
 	}
 	
 }
